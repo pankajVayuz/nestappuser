@@ -7,17 +7,15 @@ import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
 import { LocalStrategy } from 'src/auth/strategy/local.strategy';
 import { HashService } from 'src/user/hash.service';
-import { jwtConstants } from 'src/auth/strategy/constants';
-import { ConfigModule } from '@nestjs/config';
-import { PassportModule } from '@nestjs/passport';
+
 @Module({
   imports: [
       
-        ConfigModule.forRoot(),
-    PassportModule.register({ session:true}),
+        // ConfigModule.forRoot(),
+    // PassportModule.register({ session:true}),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     JwtModule.register({
-      secret:`lucky`,
+      secret:process.env.SECRET_KEY,
       signOptions: {
         expiresIn: '60d',
       },

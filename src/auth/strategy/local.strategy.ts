@@ -13,7 +13,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     const user = await this.authService.validateUser(username, password);
     if (!user) {
       throw new UnauthorizedException({
-        message: 'You have entered a worng username or passwordz',
+        message:'You have entered a worng username or passwordz',
       });
     }
     return user;
