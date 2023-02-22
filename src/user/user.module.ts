@@ -22,12 +22,11 @@ import { UserController } from './user.controller';
   ],
   controllers: [UserController],
   providers: [
+    AuthService,
     UserService,
     HashService,
-    AuthService,
     JwtStrategy,
-      LocalStrategy,
-    
+    LocalStrategy,
   ],
 })
 export class UserModule {}
