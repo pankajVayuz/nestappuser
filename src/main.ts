@@ -4,9 +4,39 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { LoggingInterceptor } from './interceptor/logging.interceptor';
 import { AllExceptionsFilter } from './user/exceptions/all-exceptions.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ServerOptions } from 'http';
+import { IoAdapter } from '@nestjs/platform-socket.io';
+import { join } from 'path';
+import { NestExpressApplication } from '@nestjs/platform-express';
+
+
+
+export class SocketAdapter extends IoAdapter {
+  createIOServer(
+    port: number,
+    options?: ServerOptions & {
+      namespace?: string;
+      server?: any;
+    },
+  ) {
+    const server = super.createIOServer(port, {
+      ...options,
+      cors: {
+        origin: 'http://localhost:3000',
+        methods: ['GET', 'POST'],
+      },
+    });
+    return server;
+  }
+}
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule,{ cors: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.useStaticAssets(join(__dirname, '..', 'static'));
+  app.enableCors({
+    origin: 'http://localhost:3000',
+  });
+  app.useWebSocketAdapter(new SocketAdapter(app));
   
   /**Add validation pipe for user validation  */
   app.useGlobalPipes(new ValidationPipe());

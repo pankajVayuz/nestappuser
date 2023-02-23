@@ -1,45 +1,39 @@
-import { UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 import {
-  ConnectedSocket,
-  MessageBody,
   SubscribeMessage,
   WebSocketGateway,
+  OnGatewayInit,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { IsNotEmpty, IsString } from 'class-validator';
 import { Socket, Server } from 'socket.io';
+import { Logger, UseFilters } from '@nestjs/common';
 import { WebsocketsExceptionFilter } from './exceptionfilter/chat-exception.filter';
 
-class ChatMessage {
-  @IsNotEmpty()
-  @IsString()
-  nickname: string;
-  @IsNotEmpty()
-  @IsString()
-  message: string;
-}
-
 @WebSocketGateway({
-  cors: {
-    origin: '*',
-  },
+  namespace: '/chat',
 })
-  /** for Exception hendaling */
+   /** for Exception hendaling */
 @UseFilters(new WebsocketsExceptionFilter())
-export class ChatGateway {
-  @WebSocketServer()
-  server: Server;
+export class ChatGateway implements OnGatewayInit {
+  /**create server */
+  @WebSocketServer() server: Server;
 
-  @SubscribeMessage('text-chat')
-  @UsePipes(new ValidationPipe())
-  handleMessage(
-    @MessageBody() message: ChatMessage,
-    @ConnectedSocket() _client: Socket,
-  ) {
-    this.server.emit('text-chat', {
-      ...message,
-      time: new Date().toDateString(),
-    });
+  private logger: Logger = new Logger('ChatGateway');
+
+  afterInit(server: any) {
+    this.logger.log('Initialized!');
   }
 
+  @SubscribeMessage('joinRoom')
+  handleRoomJoin(client: Socket, room: string) {
+    client.join(room);
+    client.emit('joinedRoom', room);
+  }
+
+  @SubscribeMessage('chatToServer')
+  handleMessage(
+    client: Socket,
+    message: { sender: string; room: string; message: string },
+  ) {
+    this.server.to(message.room).emit('chatToClient', message);
+  }
 }
